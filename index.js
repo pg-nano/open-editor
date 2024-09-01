@@ -1,8 +1,7 @@
+import { defaultEditor, getEditor } from 'env-editor';
+import { parseLineColumnPath, stringifyLineColumnPath } from 'line-column-path';
 import process from 'node:process';
-import {execa} from 'execa';
-import {getEditor, defaultEditor} from 'env-editor';
-import {parseLineColumnPath, stringifyLineColumnPath} from 'line-column-path';
-import open from 'open';
+import spawn from 'tinyspawn';
 
 export function getEditorInfo(files, options = {}) {
 	if (!Array.isArray(files)) {
@@ -78,21 +77,9 @@ export default async function openEditor(files, options = {}) {
 	const result = getEditorInfo(files, options);
 	const stdio = result.isTerminalEditor ? 'inherit' : 'ignore';
 
-	const subprocess = execa(result.binary, result.arguments, {
+	const subprocess = spawn(result.binary, result.arguments, {
 		detached: true,
 		stdio,
-	});
-
-	// Fallback
-	subprocess.on('error', () => {
-		const result = getEditorInfo(files, {
-			...options,
-			editor: '',
-		});
-
-		for (const file of result.arguments) {
-			open(file);
-		}
 	});
 
 	if (options.wait) {
